@@ -1,0 +1,148 @@
+---
+title: 'Stat 480 - Homework #7'
+author: "Your Name"
+date: "3/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+<br/>
+
+#### Submission Details
+
+**Due date**: the homework is due before class on Thursday. 
+
+**Submission process**: submit both the R Markdown file and the corresponding html file on canvas. Please submit both the `.Rmd` and the `.html` files separately and do not zip the two files together.
+
+<br/>
+
+#### Measles Vaccination Rates
+
+
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.  
+
+
+2. The data this week comes from [The Wallstreet Journal](https://github.com/WSJ/measles-data). The data set includes immunization rate data for schools across the U.S. The accompanying article is published [here](https://www.wsj.com/graphics/school-measles-rate-map/).   
+
+```{r }
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(forcats)
+measles <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-02-25/measles.csv')
+```
+
+3. For how many schools do we have data? How many of these schools recorded their Measles, Mumps, and Rubella (MMR) vaccination rate? Use the variable `mmr` to answer this question. Only consider schools with a rate > 0 for the remainder of the homework.  
+
+```{r}
+measles2 = distinct(measles, name, .keep_all = TRUE)
+count(distinct(measles, name, keep_all = TRUE))
+
+measles3 = measles2 %>%
+  filter(mmr > 0)
+```
+
+  
+4. Using `mutate()`, reorder the levels of the variable `state` according to the median MMR vaccination rate. Then "pipe" your results into ggplot and create box plots of MMR vaccination rates for each state. Map the variable `state` to `color`, include the parameter `show.legend = FALSE` within `geom_boxplot()`, and flip the coordinates. Interpret.  
+
+```{r}
+measles3 %>%
+  group_by(state) %>%
+  mutate(mmrperstate = mean(mmr)) %>%
+  arrange(mmrperstate) %>%
+  ggplot() + geom_boxplot(aes(x = state, y = mmrperstate, show.legend = FALSE)) + coord_flip()
+```
+
+### Interpretation
+
+As the boxplot shows Arkansas is by far the worst when it comes to mmr vacination rate for any state. For the most part the boxplot shows that most of the state are doing a fairly good job of vacinating for mmr.
+  
+5. According to the CDC, 95% of a population needs to be vaccinated to stop the spread of measles and preserve herd immunity. Using `mutate()` and `case_when()`, introduce a new variable into the data set `mmr_threshold` where the value is "above" when `mmr` is greater than 95 and "below" otherwise. Is there a relationship between the type of school and the proportion of schools that did not reach that threshold? For each type of school, calculate the mean MMR vaccination rate. On how many responses are the averages based? Show these numbers together with the averages. Additionally, calculate the percentage of schools that did not reach that threshold. Arrange your results from greatest percentage to lowest. Comment on your results.  
+
+```{r}
+measles4 = measles3 %>%
+  group_by(name) %>%
+  mutate(mmr_threshold = case_when(mmr >= 95 ~ "above", mmr < 95 ~ "below"))
+  
+measles4 %>%
+  group_by(type) %>%
+  summarize(mmrmean = mean(mmr),
+            avgmmrbelowthreshold = mean(mmr_threshold == 'below'),
+            avgmmrabovethreshold = mean(mmr_threshold == 'above'),
+            response = n()) %>%
+  arrange(desc(mmrmean))
+```
+
+### Interpretation
+The school type BOCES has the highest mean mmr while charter has the lowest mean mmr. Out of the 7 types of schools only 1 is above the average mmr threshold rate of 95% which is not good because according to the CDC you need to be above 95% to prevent the spread od measles and preserve heard immunity. The one thing that shocked me about this data is how low avg mmr above threshold is for charter schools compared to the other 6 types. Charter schools sit at 25% while the next lowest is 64%.
+
+6. Use `dplyr` functions to:
+
+  - only include observations with enrollment greater than 0 and exclude the school "West Valley School Prek-6" (there is an issue with that observation)  
+  - filter for rows that have a unique combination of the variables `year`, `city`, `state`, name, `type`, `enroll`, and `mmr` (there are duplicates in the data)
+  - Inside `mutate()` use `weighted.mean()` to calculate the mean MMR vaccination rates weighted by the enrollment. Name this new variable `state_avg`.  
+  - For each city and state combination, calculate the mean MMR vaccination rate weighted by enrollment, the total number of students enrolled, and the mean of the state average calculated in the previous step.  
+  - only consider rows where the total enrollment is more than 250 and less than 100,000.
+  
+```{r}
+measles5 = measles4 %>%
+  filter(enroll > 0)
+
+measles6 = measles5 %>%
+  filter(name != "West Valley School Prek-6")
+
+# original data
+measles %>%
+distinct(year, city, state, name, type, enroll, mmr, .keep_all= TRUE)
+
+# enrolled filtered data (i.e. the one created in this question)
+measles6 %>%
+distinct(year, city, state, name, type, enroll, mmr)
+
+measles7 = measles6 %>%
+  group_by(state) %>%
+  mutate(state_avg = weighted.mean(mmr, enroll))
+
+measles8 = measles7 %>%
+  group_by(city)%>%
+  group_by(state)%>%
+  mutate(cityandstateavg = weighted.mean(mmr, enroll, state_avg),
+         enrolled = sum(enroll),
+         avgofstate = mean(state_avg))
+
+measles9 = measles8 %>%
+  filter(enroll < 100000 & enroll > 250)
+```  
+  
+  
+7. Now use the previous data set to draw a scatter plot with the mean MMR rate for each city on the y-axis and the student enrollment on the x-axis and color by the state mean MMR rate. Use the code below as your starting point and add in the necessary aesthetic mappings within `ggplot(aes( ))`. Describe and summarise the chart.
+
+``` {r}
+measles9 %>%
+  group_by(city)%>%
+  mutate(mmravgcity = mean(mmr),
+         enrollavgcity = mean(enroll),
+         )%>%
+  ggplot(aes(x = enrollavgcity, y = mmravgcity, color = state_avg)) + 
+  geom_hline(yintercept = 95, linetype = "dashed", size = 0.25, color = "grey40") +
+  geom_point(size = 2, alpha = .3) +
+  scale_color_gradient(low = "red", high = "blue", limits=c(88, 96), oob = scales::squish, 
+  guide = guide_colorbar(direction = "horizontal", title.position = "top", 
+                        title = "State average immunization rate", barwidth = 15, barheight = 0.25, 
+                        ticks = FALSE, title.hjust = 0.5)) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  ggtitle("MMR immunization rates at schools grouped across US cities") +
+  labs(subtitle="According to data collected by The Wall Street Journal",
+       x = "Student Enrollment", y = "mmr rate for city") +
+  scale_x_continuous(labels = scales::comma) 
+```
+
+### Interpretation
+
+As the dot plot shows a lot of the mmr rates for the different cities in the data set are above the 95% threshold, which is a very good thing. The majority of schools have an enrollment under under 750 with the state average immunization rate ranging from 88% to 96%.
+
+

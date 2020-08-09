@@ -1,0 +1,154 @@
+---
+title: 'Stat 480 - Homework #6'
+author: "Jeremy Miranda"
+date: "2/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+<br/>
+
+#### Submission Details
+
+**Due date**: the homework is due before class on Thursday. 
+
+**Submission process**: submit both the R Markdown file and the corresponding html file on canvas. Please submit both the `.Rmd` and the `.html` files separately and do not zip the two files together.
+
+<br/>
+
+#### Ames housing
+
+  
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.
+
+  
+2. The Ames based, non-profit company OAITI provides aoe open-source data sets. One of these data sets consists of information on all house sales in Ames between 2008 and 2010. The following piece of code allows you to read the dataset into your R session. How many house sales were there between 2008 and 2010? Which type of variables are we dealing with?
+
+```{r}
+housing <- read.csv("https://raw.githubusercontent.com/OAITI/open-datasets/master/Housing%20Data/Ames-Housing.csv")
+```
+
+
+  
+3. Do sales prices change over time? (Don't test significances) Provide a graphic that supports your statement.
+
+```{r}
+library(ggplot2)
+ggplot(housing, aes(x=as.factor(YearSold), y=SalePrice)) + 
+  geom_boxplot()
+```
+
+
+### Interpretation
+No it does not appear there is much of a difference in sales price over time. As the boxplots show all three match up almost identically
+
+  
+4. What is the relationship between sales prices and the size of the house (living area)? Make a chart and describe the relationship.
+
+```{r}
+ggplot(housing,aes(LivingArea, SalePrice)) +
+  geom_point()
+```
+
+
+### Interpretation
+As the line chart shows, as living area increase so does sale price. This isn't surprising becasue larger homes tend to cost more.
+
+  
+5. Use `dplyr` functions to:  
+  
+  - introduce a variable consisting of price per square foot,   
+  - find the average price per square foot in each of the Ames neighborhoods,            
+  - exclude averages that are based on fewer than 10 records,  
+  - reorder the remaining neighborhoods according to the mean sales prices.  
+  
+
+```{r}
+library(dplyr)
+library(tidyverse)
+housing %>%
+  mutate(square_foot = SalePrice/LivingArea)
+
+housing %>%
+  group_by(Neighborhood) %>%
+  mutate(square_foot = SalePrice/LivingArea,
+         avg_square_foot = mean(square_foot)
+  )
+
+housing%>%
+  group_by(Neighborhood)%>%
+  filter(n() >= 10) %>% 
+  mutate(square_foot = SalePrice/LivingArea,
+         avg_square_foot = mean(square_foot),
+         avg_square_foot_10 = mean(square_foot))
+
+#housing %>%
+  #group_by(Neighborhood)%>%
+  #filter(n() <= 10)%>%
+  #arrange(mean(housing$SalePrice))
+#There's an error in this code, I can't figure out the problem and can't knit so I commented it out
+```
+
+
+
+6. Draw a chart of the average sale prices by neighborhood and comment on it. Only consider neighborhoods with at least 10 sales. <br><br> **Bonus**: write the code for this question and the previous one in a single statement for +0.5 point extra credit.
+
+```{r}
+housing%>%
+  group_by(Neighborhood)%>%
+  filter(n() >= 10) %>% 
+  mutate(square_foot = SalePrice/LivingArea,
+         avg_square_foot = mean(square_foot),
+         avg_square_foot_10 = mean(square_foot)) %>%
+  ggplot(aes(x=Neighborhood, y = avg_square_foot_10)) +
+  geom_point()
+```
+
+
+7. Use `dplyr` functions to:
+
+  - introduce a logical variable called 'garage' that is FALSE if the garage area is zero, and TRUE otherwise,
+  - exclude all sales of houses that do not have a garage,
+  - only consider 1 and 2 story houses (`HouseStyle`),
+  - create a new variable `YBCut` from `YearBuilt` that introduces age categories that groups the year a house was built into intervals: 1800-1850, 1850-1900, 1950-2000, 2000+ (see `?cut`).
+  
+```{r}
+housing %>%
+dplyr::mutate(garage = ifelse(GarageArea == 0, FALSE, TRUE))
+
+#housing%>%
+  #filter(garage==1)
+#keeps telling me garage not found and I am not sure why
+# commented out so I can actually knit
+
+# originally had
+#filter(housing, HouseStyle == '1-Story')
+#filter(housing, HouseStyle == '2-Story')
+#doesn't work
+
+housing %>%
+filter(HouseStyle == '1-Story' | HouseStyle == '2-Story')
+
+#YBCut <- cut(housing$YearBuilt, breaks = 4)
+#Had this originally obviously doesn't work, after some googling realized can't have breaks = 4 because it's treating the years as numbers that need to be put together, not what i want
+
+#housing %>%
+  #mutate(ybCut = cut.default(YearBuilt, breaks=c(- 1850, 1900, 1950, 2000, 2000),
+                   #labels=c("1850s","1900s","1950s", "2000s", "2000+")))
+#Can't get to work, don't know why
+```
+  
+  
+  
+8. Draw a chart of the previous data set. Draw side-by-side boxplots of the garage area by `YBCut`. Facet by the style of house. Describe and summarise the chart. <br><br> **Bonus**: write the code for this question and the previous one in a single statement for +0.5 point extra credit.
+
+```{r}
+ggplot(data = housing, aes(x = ybCut, y = housing$GarageArea)) + 
+  geom_boxplot() + facet_wrap(~housing$HouseStyle)
+```
+
+
+

@@ -1,0 +1,84 @@
+---
+title: 'Stat 480 - Homework #2'
+author: "Jeremy Miranda"
+date: "1/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Economic Guide to Picking a College Major
+
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.
+
+2. Using the command below, read in the data set into your R session. 
+
+```{r}
+recent_grads <- read.csv("https://raw.githubusercontent.com/Stat480-at-ISU/materials-2020/master/02-r_intro/data/recent_grads.csv")
+```
+
+```{r}
+library(dplyr)
+```
+
+3. Create a new variable, `share_women`,  in the dataset that is women as share of total; i.e. the number of women divided by the total number of men and women.
+```{r}
+women = sum(recent_grads$Women,na.rm = TRUE)
+men = sum(recent_grads$Men,na.rm = TRUE)
+share_women = ((women)/(women + men))
+```
+
+4. Create a subset of the data containing only the rows where the `Major_category` is `STEM`.
+
+```{r}
+stem <- recent_grads %>% filter(Major_category == "STEM")
+```
+
+
+5. For your subset, compute the average  of `share_women` and its standard deviation. Also compute the mean median earnings (`Median`) and its standard deviation. Comment on the results. (You might have to deal with missing values appropriately).
+
+```{r}
+women2 = sum(stem$Women,na.rm = TRUE)
+men2 = sum(stem$Men,na.rm = TRUE)
+share_women2 = ((women2)/(women2 + men2))
+sd(share_women2)
+#Smaller percentage of women have a stem degree compared to the total
+
+average = sum(stem$Median,na.rm = TRUE)/length(stem$Major)
+sd(stem$Median)
+```
+
+
+6. Again using the subset, compute the correlation between women as a share of total (`share_women`) and the median earnings (`Median`) and interpret your results.
+
+```{r}
+stem$Women
+stem$Men
+share_women2 = ((stem$Women)/(stem$Women + stem$Men))
+cor(stem$Median,share_women2, use = "complete.obs")
+#Salary and percentage of women are negatively correlated. The more women the lower the pay.
+```
+
+7. Use the original dataset and `ggplot2` to draw a scatterplot of women as share of total and the median earnings. Color points by the major category (`Major_category`). Comment on the result. 
+
+```{r}
+library(ggplot2)
+recent_grads$Women
+recent_grads$Men
+share_women2 = ((recent_grads$Women)/(recent_grads$Women + recent_grads$Men))
+ggplot(data = recent_grads, aes(x = share_women2, y = Median)) +
+  geom_point(aes(color = Major_category))
+#strength: moderately strong
+#direction: decreasing
+#outliers: yes there is one distinct outlier
+#relationship: negative
+```
+
+
+
+**Due date**: the homework is due before class on Thursday. 
+
+**For the submission**: submit your solution in an R Markdown file and (just for insurance) submit the corresponding html file with it. 

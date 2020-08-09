@@ -1,0 +1,83 @@
+---
+title: 'Stat 480 - Homework #1'
+author: "Jeremy Miranda"
+date: "1/23/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(vctrs)
+```
+### Importing data sets
+```{r}
+life5060 <- read.csv("https://raw.githubusercontent.com/Stat480-at-ISU/materials/master/01_collaborative-environment/data/gapminder-5060.csv")
+
+life7080 <- read.csv("https://stat480-at-isu.github.io/homework/data/gap7080.csv")
+head(life7080)
+
+```
+### Combined data
+```{r}
+combined <- rbind(life5060, life7080)
+```
+### Filter Canada
+```{r}
+canada <- combined %>% filter(country == "Canada")
+head(canada)
+```
+### Canada graph
+```{r}
+canada %>% 
+  ggplot(aes(x = year, y = lifeExp)) +
+  geom_line()
+```
+### Fix Canada data
+```{r}
+canada %>% filter(year == 1957)
+canada_fixed <- canada %>% mutate(lifeExp = replace(lifeExp, year==1957, 69.96))
+```
+### Graph of fixed Canada data
+```{r}
+canada_fixed %>% ggplot(aes(x = year, y = lifeExp)) + 
+  geom_line()
+```
+### Graph of US, Mexico, and Canada using combined data
+```{r}
+canada_fixed %>% 
+  ggplot(aes(x = year, y = lifeExp, group=country)) + geom_line() +
+  geom_line(data = combined %>% 
+              filter(country %in% c("United States", "Mexico")))
+```
+### Graph of US, Mexico, and Canada using combined data with color
+```{r}
+canada_fixed %>% 
+  ggplot(aes(x = year, y = lifeExp, colour=country)) + geom_line() +
+  geom_line(data = combined%>% 
+              filter(country %in% c("United States", "Mexico")))
+```
+### Write Up
+
+I noticed that Mexicos life expectancy is extremely low compared to the US and Canada. Even though Mexico's life expectancty has steadily increased it's still a substantial distance away from the US and Canada. What stuck out the most to me is how large the gap in life expectancy is from 1950 to 1970 when you compare Mexico to the US and Canada. I do wonder why the US and Canada are so close when it comes to life expectancy. I can think of a couple reasons (i.e. health care and obesity rates) but it would be interesting to do more research to see if there is one reason inparticular the two countries are so close.
+
+
+## Life Expectancy 1950 - 1990
+
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.
+
+2. In class, we have discussed life expectancy in Canada, Mexico and the United States in the 50s and 60s. Additional data for the 70s and 80s is available in the file <a href="">gap7080.csv</a>. Use the R Markdown file with the sample solution for the test case (see the online schedule for a link) to extend our class solution and include values for the 70s and 80s, i.e. you are asked to
+    a. Visualize the life expectancy for the United States, Canada and Mexico in a line chart (with three lines in different colours).
+    b. Comment in your writeup about what you see in the plot. Make sure that the incorrect value for Canada in 1957 is fixed.
+
+Note: 
+
+1. this homework is supposed to be mainly a code reading exercise. You should not have to program extensively. Instead, you have to figure out which pieces you need to copy and adjust. 
+2. the R command for combining two datasets that have the same structure is `rbind`, used as:
+
+```
+combined <- rbind(data1, data2)
+```
+
+For the submission: submit your solution in an R Markdown file and (just for insurance) submit the corresponding html file with it. 

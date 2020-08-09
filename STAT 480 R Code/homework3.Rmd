@@ -1,0 +1,79 @@
+---
+title: 'Stat 480 - Homework #3'
+author: "Jeremy Miranda"
+date: "2/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Spotify data
+
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.  
+
+2. Using the command below, read in the spotify data set into your R session. 
+
+```{r}
+spotify <- read.csv("https://raw.githubusercontent.com/Stat480-at-ISU/Stat480-at-ISU.github.io/master/homework/data/spotify.csv")
+```
+
+3. Use one of our object inspecting functions and interpret the result in the data that you see.
+```{r}
+library(dplyr)
+str(spotify)
+
+rap <- filter(spotify, playlist_genre == "rap")
+rock <- filter(spotify, playlist_genre == "rock")
+pop <- filter(spotify, playlist_genre == "pop")
+latin <- filter(spotify, playlist_genre == "latin")
+edm <- filter(spotify, playlist_genre == "edm")
+rb <- filter(spotify, playlist_genre == "r&b")
+
+summary(rap$duration_min)
+summary(rock$duration_min)
+summary(pop$duration_min)
+summary(latin$duration_min)
+summary(edm$duration_min)
+summary(rb$duration_min)
+
+```
+Interpretation:
+Rap, pop, and latin all have medians around 3.5 minutes, while r&b and rock have medians closer to 4 minutes, and edm has a median around 3.4 minutes. This didn't really surprise me, in fact it reaffirmed what I thought I already knew. I assumed genres like rock and r&b had longer songs because of all the different aspects that go into making that type of song. I never did anything to check my assumption until now but it was cool to find out I was right.
+
+4. Use the package `ggplot2` to draw a barchart of the genres. In addition, map the genre categories to the fill color of the barchart.
+```{r}
+library(ggplot2)
+ggplot(data = spotify, aes(x = playlist_genre)) +
+  geom_bar(aes(fill = playlist_genre))
+```
+
+
+5. Use the package `ggplot2` to draw a histogram of one of the continuous variables in the dataset. Use fill color to show the genre categories and adjust the binwidth if necessary. Use `facet_wrap()` to create a histogram for each of the genre categories.
+
+```{r}
+ggplot(data = spotify, aes(x = duration_min,)) +
+  geom_histogram(aes(fill = playlist_genre))+ facet_wrap(~playlist_genre)
+```
+
+6. Use the package `ggplot2` to draw a boxplot to compare one of the continuous variables with the genre categories. Again, use fill color to show the genre categories.
+
+```{r}
+ggplot(data = spotify, aes(x = playlist_genre, y = duration_min)) +
+  geom_boxplot(aes(fill = playlist_genre))
+```
+
+7. For each of the three figures above, write a two-three sentence summary, describing the
+    a. **structure of the plot**: what type of plot is it? Which variables are mapped to x, to y, and to the (fill) color?
+    b. **main message of the plot**: what is your main finding, i.e. what do you want viewers to learn from the plot?
+    c. **additional message**: point out anomalies or outliers, if there are any. 
+4. It is a bar chart with x being playlist genre and the fill also being playlist genre. The bar chart shows the count for all 6 genres as it pertains to the amount of playlist created based on 1 of the 6 genres. There does not appear to be any outliers in the graph.
+
+5. It is a histogram with x being duration in minutes and fill being playlist genre. The histogram shows each genre and the duration of the songs in minutes associated with those individual genres. There does not appear to be any outliers in the graph.
+
+6. It is a boxplot with x being playlist genre and y being duration in minutes, and fill being playlist genre. This boxplot shows the duration in minutes of a song for each individual genre. These boxplots show that there is outliers in each of the individual genres duration in minutes.
+
+Due date: the homework is due before class on Thursday. 
+
+For the submission: submit your solution in an R Markdown file and (just for insurance) submit the corresponding html file with it. 

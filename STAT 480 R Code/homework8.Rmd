@@ -1,0 +1,182 @@
+---
+title: 'Stat 480 - Homework #8'
+author: "Jeremy Miranda"
+date: "3/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+<br/>
+
+## The Joy of Painting with Bob Ross
+
+![](https://static01.nyt.com/images/2019/07/13/arts/13video/bob-ross-cover-videoSixteenByNineJumbo1600-v5.png)
+
+
+<br/>
+
+### Submission Details
+
+**Due date**: the homework is due before class on Thursday. 
+
+**Submission process**: submit both the R Markdown file and the corresponding html file on canvas. Please submit both the `.Rmd` and the `.html` files separately and do not zip the two files together.
+
+<br/>
+
+### Questions
+
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.
+
+```{r}
+# load necessary libraries
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(forcats)
+library(readr)
+```
+
+
+2. The data this week comes from [fivethiryeight](https://github.com/fivethirtyeight/data). The data set includes information on the 403 episodes of "The Joy of Painting". The accompanying article is published [here](https://fivethirtyeight.com/features/a-statistical-analysis-of-the-work-of-bob-ross/).  
+
+```{r }
+# read in the data
+bob_ross <- read_csv('https://raw.githubusercontent.com/Stat480-at-ISU/Stat480-at-ISU.github.io/master/homework/data/bob-ross.csv')
+```
+
+3. Variables `alizarin_crimson` through `burnt_umber` correspond to the binary presence (0 or 1) of that color in the painting. Gather all of these variables and create a long form of the data, introducing two new variables called `color` and `presence`. Save the result in a data frame called `bob_ross_colors`.
+
+```{r}
+bob_ross_colors <- bob_ross %>%
+   pivot_longer(cols = alizarin_crimson:burnt_umber, 
+               names_to = "color", 
+               values_to = "presence")
+```
+
+
+4. Does Bob Ross have a favorite color to paint with? Use the data `bob_ross_colors` as your starting point and for each color calculate the number of times that color was used throughout the series. After using this number to reorder the levels of the variable `color`, create a bar chart using the code below as your starting point and add in the necessary aesthetic mappings within `ggplot(aes( ))`. Describe and summarize the chart.
+
+```
+question4_data %>%
+  ggplot(aes( )) + 
+  geom_bar(show.legend = FALSE) + 
+  coord_flip() + 
+  theme_minimal() +
+  labs(y = "Number of paintings",
+       x = "", 
+       title = "Frequency of colors in Bob Ross Paintings") +
+  scale_fill_manual(values = c("#CD5C5C", "#8A3324", "#2C6436", "#3C67A7", "#643914", "#E7BD2F", "#546F1F", "#C36A4A", "#346BB1", "#B58A30", "#F8ED5F", "#372518", "#973B29")) 
+```
+
+
+```{r}
+bob_ross_colors2 <- bob_ross_colors %>%
+  count(presence, weights = color) %>%
+  filter(presence == 1) %>%
+  arrange(n)
+
+bob_ross_colors2 %>%
+  mutate(weights = fct_reorder(weights, n)) %>%
+  ggplot(aes(x = weights, y = n)) + 
+  geom_bar(show.legend = FALSE, stat = "identity") + 
+  coord_flip() + 
+  theme_minimal() +
+  labs(y = "Number of paintings",
+       x = "Color", 
+       title = "Frequency of colors in Bob Ross Paintings") +
+  scale_fill_manual(values = c("#CD5C5C", "#8A3324", "#2C6436", "#3C67A7", "#643914", "#E7BD2F", "#546F1F", "#C36A4A", "#346BB1", "#B58A30", "#F8ED5F", "#372518", "#973B29"))
+```
+
+## Interpretation
+
+The bar chart shows that Bob Ross's favorite color is alizarin crimson but not by much, van dyke brown is a close second. The bar chart also shows his least favorite color to be is indian red. Arranging the bar chart in order from least to greatest makes summarizing and deciphering Bob Ross's favorite colors very easy.
+
+5. For this question use the original data again. Variables `aurora_borealis` through `winter` correspond to the binary presence (0 or 1) of that element in the painting. Use `pivot_longer()` as shown in class to transform the data into a tidier format with new variables `element` and `presence`. Save the result in a data frame called `bob_ross_elements`.
+
+```{r}
+bob_ross_elements <- bob_ross %>%
+   pivot_longer(cols = aurora_borealis:winter, 
+               names_to = "element", 
+               values_to = "presence")
+```
+
+
+6. What are the most frequent elements in his paintings? Use the data `bob_ross_elements` as your starting point and for each element calculate the number of times that element was included. Then use this number to reorder the levels of `element`. Exclude elements that were featured in fewer than 50 paintings and create a bar chart. Use the code below as your starting point and add in the necessary aesthetic mappings within `ggplot(aes( ))`. Describe and summarize the chart.
+
+```
+question6_data %>%
+  ggplot(aes( )) + 
+  geom_bar(fill = "seagreen") + 
+  coord_flip() + 
+  theme_minimal() +
+  labs(y = "Number of paintings",
+       x = "", 
+       title = "What were most common features in Bob Ross paintings?",
+       subtitle = "Paintings by the numbers")
+```
+
+```{r}
+bob_ross_elements2 <- bob_ross_elements %>%
+  count(presence, weights = element) %>%
+  filter(presence == 1) %>%
+  filter(n > 50) %>%
+  arrange(n)
+
+bob_ross_elements2 %>%
+  mutate(weights = fct_reorder(weights, n)) %>%
+  ggplot(aes(x = weights, y = n)) + 
+  geom_bar(fill = "seagreen", stat = "identity") + 
+  coord_flip() + 
+  theme_minimal() +
+  labs(y = "Number of paintings",
+       x = "", 
+       title = "What were most common features in Bob Ross paintings?",
+       subtitle = "Paintings by the numbers")
+```
+
+## Interpretation
+
+As the bar chart shows Bob Ross frequently paints just one tree in his paintings, but close behind only one tree being painted is trees (as in multiple) being painted. The two things Bob Ross does not frequently paint are winter and a cabin, he tends to stick with painting trees
+
+
+7. Did the content of the paintings change over time? We will attempt to answer this question by looking at elements that appeared in more than 90 paintings and their trends over the seasons.  Use the data `bob_ross_elements` as your starting point and for each season and element, calculate the number of times an element was included. Exclude elements that were included in less than 90 paintings total. Create a line plot showing number of times an element was included for each season with season on the x-axis and facet by element. Use the code below as your starting point and add in the necessary aesthetic mappings within `ggplot(aes( ))` and add in the faceting. Describe and summarize the chart.
+
+```
+question7_data %>%
+  ggplot(aes( )) + 
+  geom_line(color = "deepskyblue") + 
+  # add faceting here
+  labs(y = "Number of paintings with element",
+       title = "The content of Bob Ross paintings over time",
+       subtitle = "Dashed line is number of episodes in the season") + 
+  geom_hline(yintercept = 13, lty = 2, color = "grey70") + 
+  theme_minimal() + 
+  expand_limits(y = 0) 
+  ```
+
+
+```{r}
+bob_ross_elements4 <- bob_ross_elements %>%
+  group_by(season)%>%
+  count(presence, weights=element) %>%
+  filter(presence == 1)
+
+bob_ross_elements4 %>%
+  ggplot(aes(x=weights, y = n)) +
+  geom_line(color = "deepskyblue") +
+  # add faceting here
+  labs(y = "Number of paintings with element",
+       title = "The content of Bob Ross paintings over time",
+       subtitle = "Dashed line is number of episodes in the season") +
+  geom_hline(yintercept = 13, lty = 2, color = "grey70") +
+  theme_minimal() +
+  expand_limits(y = 0) +
+  theme(axis.text.x = element_text(size=10, angle=90)) 
+```
+
+## Interpretation
+
+The line graph shows that tree and trees are the most common elements in Bob Ross's paintings over 31 seasons. This makes sense because in question 6 we found that tree and trees are the most common elements in a Bob Ross painting. By adding season to the mix, it just shows how many times that element appears

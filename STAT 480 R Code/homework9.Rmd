@@ -1,0 +1,120 @@
+---
+title: 'Stat 480 - Homework #9'
+author: "Jeremy Miranda"
+date: "3/31/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+
+<br/>
+
+#### Submission Details
+
+**Due date**: the homework is due before class on Thursday. 
+
+**Submission process**: submit both the R Markdown file and the corresponding html file on canvas. Please submit both the `.Rmd` and the `.html` files separately and do not zip the two files together.
+
+<br/>
+
+#### Weekly box office data
+
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.
+
+2. For this homework we use the data set `box` from the `classdata` package, which consists of weekly box office gross for movies of the last five year.
+
+```{r, message=FALSE, warning=FALSE}
+# devtools::install_github("haleyjeppson/classdata")
+library(classdata)
+library(dplyr)
+library(scales)
+library(ggplot2)
+library(tidyr)
+
+head(box)
+```
+
+3. In class we discussed two instances where a movie was released under the same name as a different movie previously. Identify at least one more instance of a movie where that happened. Report the name of the movie, search online for additional information. Describe the strategy you used to identify this movie, report the code involved.  
+
+```{r}
+box1 <- box %>% 
+  left_join(budget, by = "Movie")
+
+budget %>%
+  filter(Movie == "The Addams Family")
+```
+
+## Interpretation
+# The movie I found that repeats is The Addams Family, it was originally released on 11/22/1991 and than rereleased on 10/11/2019. I did this by using a similar code to that of the yourturn example but I filtered for a random movie to see if there was a duplicate.
+
+
+4. Re-derive variables: `Change` (percent change in gross income from last week), `Rank.Last.Week`, `Per.Thtr.` (as gross per theater), and `Total.Gross` (as the cumulative sum of weekly gross).
+
+```{r}
+box2 <- box1 %>%
+  group_by(Movie) %>%
+  mutate(new_rederive_Change = (Gross-lead(Gross))/lead(Gross)) %>%
+  mutate(new_rederive_Change = percent(new_rederive_Change)) %>%
+  mutate(new_Rank_Last_Week = lead(Rank)) %>%
+  mutate(new_Per_Thtr = Gross/Thtrs.) %>%
+  mutate(new_Total_Gross = cumsum(Gross))
+  
+```
+
+
+5. For the variables `Per.Thtr.` and `Change` compare the original variables and the newly derived ones. Are there differences? Where? Try to describe patterns you find.
+
+```{r}
+#box2 <- box1 %>%
+  #group_by(Movie) %>%
+  #mutate(new_rederive_Change = (Gross-lead(Gross))/lead(Gross)) %>%
+  #mutate(new_rederive_Change = percent(new_rederive_Change)) %>%
+  #mutate(new_Per_Thtr = Gross/Thtrs.)
+#This is the code I used to re-derieve Per.Thtr and Change
+```
+
+## Interpretation
+
+# No there are no differences in the original and re-derieved variables when it comes to the numbers. The only differences are found in the formatting of the numbers. In Per.Thtr. the original format did not include decimals whereas the re-derieved does. Similarly for the change variable, the orginial one is expressed as a number whereas the re-derieved is expressed as a percentage.
+
+6. Is the original variable `Total.Gross` strictly increasing? 
+
+```{r}
+box2 %>%
+  group_by(Movie) %>%
+  ggplot(aes(x = Date, y = Total.Gross)) + geom_line()
+  
+  
+```
+
+## Interperatation
+
+# Yes the original variable Total.Gross is strictly increasing because, each line in the graph represents a movie and each line is going up (increasing).
+
+7. Identify the three top grossing movies for each year. 
+Plan of attack: 
+    - Extract the year from the `Date` variable.
+    - Summarize the total gross for each movie and each year.
+    - Find the rank of movies by total gross in each year.
+    - Filter the top three movies.
+
+
+```{r}
+# separate(data = box2,col = "Date",into = c("day","month","year"))
+# this did not work well at all
+# i think i am missing a step that would select the year only
+box2 <- box2 %>%
+  mutate(year = format(as.Date(Date, format = "%d/%m/%Y"),"%Y"))
+
+box3 <- box2 %>%
+  group_by(Movie) %>%
+  top_n(1,Total.Gross) %>%
+  arrange(desc(Total.Gross)) %>% 
+  group_by(year) %>% 
+  slice(1:3)
+```
+

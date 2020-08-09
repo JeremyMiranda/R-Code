@@ -1,0 +1,129 @@
+---
+title: 'Stat 480 - Homework #10'
+author: "Jeremy Miranda"
+date: "4/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+
+<br/>
+
+#### Submission Details
+
+**Due date**: the homework is due before class on Thursday. 
+
+**Submission process**: submit both the R Markdown file and the corresponding html file on canvas. Please submit both the `.Rmd` and the `.html` files separately and do not zip the two files together.
+
+<br/>
+
+
+#### NYC flights data
+
+1. Download the RMarkdown file with these homework instructions to use as a template for your work. Make sure to replace "Your Name" in the YAML with your name.
+
+2. For this homework we will use the data sets provided by the `nycflights13` package.
+
+```{r, message=FALSE, warning=FALSE}
+library(nycflights13)
+library(tidyverse)
+library(lubridate)
+```
+
+3. What are the ten most common destinations for flights from NYC airports in 2013? Make a table that lists these in descending order and shows the number of fligts heading to each airport.  
+
+```{r}
+flights2 <- flights %>%
+  group_by(dest)
+
+flights3 <- flights2 %>%
+  group_by(dest) %>%
+  summarise(NYCMostCommon = length(dest)) %>%
+  arrange(desc(NYCMostCommon)) %>%
+  slice (1:10)
+```
+
+
+4. What was the mean temperature at the origin airport on the day with the highest departure delay? Your answer should include the name of origin airport, the date with the highest departure delay, and the mean temperature on that day.
+
+```{r}
+flights3 <- flights2 %>%
+  arrange(desc(dep_delay)) %>%
+  mutate(date = make_date(year, month, day))
+  
+weather2 <- weather %>%
+  mutate(date = make_date(year, month, day)) %>%
+  group_by(origin, date) %>%
+  summarise(mean = mean(temp)) %>%
+  arrange(desc(mean))
+
+# If I could figure out how to add the mean column from weather 2 to flights2 I wouldn't have to manually filter
+weather2 %>%
+  filter(date == "2013-01-09") %>%
+  filter(origin == "JFK")
+
+#flights4 <- cbind(flights2, mean = weather2$mean)
+# I tried at least 8 or 9 other things to try and add the column mean from weather2 to flights but I can't figure it out
+```
+
+
+
+5. Find the flight with the longest air time. <br>(a) How long is this flight? <br>(b) What city did it fly to? <br>(c) How many seats does the plane that flew this flight have?
+
+```{r}
+flights %>%
+  arrange(desc(air_time))
+# Air time = 695
+# Origin = EWR and Destination = HNL
+# 13 hours and 35 minutes
+
+planes %>%
+  filter(tailnum == "N77066")
+# 292 seats on the plane
+
+```
+
+
+6. Consider only flights that have non-missing arrival delay information. Your answer should include the name of the carrier in addition to the carrier code and the values asked. (a) Which carrier had the highest mean arrival delay? (b) Which carrier had the lowest mean arrival delay? Make sure that your answer includes the name of the carrier and the calculated mean delay.
+
+```{r}
+flights4 <- flights %>%
+  group_by(carrier) %>%
+  mutate(NewArrivalDelay = mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(desc(NewArrivalDelay))
+
+#Easier way to read (fixed my goof)
+
+flights4 <- flights %>%
+  group_by(carrier) %>%
+  summarise(NewArrivalDelay = mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(desc(NewArrivalDelay))
+
+#F9 had the highest mean arrival delay at 21.92070 and AS has the lowest mean arrival delay at -9.930889
+```
+
+
+7. Which airlines have the most flights departing from NYC airports in 2013? Make a table that lists these in descending order of frequency and shows the number of flights for each airline. In your narrative mention the names of the airlines as well.<br>**Hint**: You can use the airlines dataset to look up the airline name based on carrier code.*
+
+
+```{r}
+flights5 <- flights %>%
+  group_by(carrier) %>%
+  mutate(MostDepartingFlights = n()) %>%
+  arrange(desc(MostDepartingFlights))
+
+# I goofed I should of done summarise and not mutate (did the same thing in question 6)
+
+#Summarise makes it way easier to read
+
+flights5 <- flights %>%
+  group_by(carrier) %>%
+  summarise(MostDepartingFlights = n()) %>%
+  arrange(desc(MostDepartingFlights))
+
+# UA has the most departing flights from NYC airports in 2013 with that number being 58665. Following UA you have B6 with 54635 departing flights and EV with 54173 departing flights which rounds out the top 3.
+```
